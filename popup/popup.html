@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusGuard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛡️ FocusGuard</h1>
+    </header>
+
+    <section class="quick-block">
+      <h2>Block Current Site</h2>
+      <div class="current-site">
+        <p id="currentUrl">Loading...</p>
+        <button id="blockCurrentBtn" class="btn btn-primary">Block This Site</button>
+      </div>
+    </section>
+
+    <section class="add-site">
+      <h2>Add Blocked Site</h2>
+      <div class="form-group">
+        <input type="text" id="siteInput" placeholder="example.com or *.example.com" />
+        <select id="ruleType">
+          <option value="exact">Exact Domain</option>
+          <option value="wildcard">Wildcard Pattern</option>
+          <option value="keyword">Keyword Match</option>
+        </select>
+        <button id="addSiteBtn" class="btn btn-primary">Add</button>
+      </div>
+    </section>
+
+    <section class="blocked-list">
+      <h2>Blocked Sites (<span id="blockedCount">0</span>)</h2>
+      <div id="blockedSitesList"></div>
+    </section>
+
+    <footer>
+      <button id="openOptionsBtn" class="btn btn-secondary">⚙️ Settings</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

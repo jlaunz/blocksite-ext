@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusGuard Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛡️ FocusGuard Settings</h1>
+    </header>
+
+    <div class="content">
+      <section class="settings-section">
+        <h2>Blocking Behavior</h2>
+        <div class="setting-group">
+          <label>
+            <input type="radio" name="blockMode" value="warning" id="modeWarning" />
+            <span>Show warning page (recommended)</span>
+          </label>
+          <label>
+            <input type="radio" name="blockMode" value="redirect" id="modeRedirect" />
+            <span>Redirect to URL</span>
+          </label>
+          <div id="redirectUrlGroup" class="indent-group" style="display: none;">
+            <input type="url" id="redirectUrl" placeholder="https://www.google.com" />
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Temporary Unblock Challenge</h2>
+        <div class="setting-group">
+          <label for="challengeType">Challenge Type:</label>
+          <select id="challengeType">
+            <option value="math">Math Problem</option>
+            <option value="typing">Typing Challenge</option>
+            <option value="wait">Wait Timer</option>
+            <option value="mixed">Math + Wait Timer</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label for="waitDuration">Wait Duration (seconds):</label>
+          <input type="number" id="waitDuration" min="10" max="300" value="30" />
+          <small>Used for "Wait Timer" and "Mixed" challenge types</small>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Blocked Sites Management</h2>
+        <div class="add-site-form">
+          <input type="text" id="newSitePattern" placeholder="example.com or *.example.com" />
+          <select id="newSiteType">
+            <option value="exact">Exact Domain</option>
+            <option value="wildcard">Wildcard Pattern</option>
+            <option value="keyword">Keyword Match</option>
+          </select>
+          <button id="addSiteBtn" class="btn btn-primary">Add Site</button>
+        </div>
+
+        <div class="help-text">
+          <strong>Rule Types:</strong>
+          <ul>
+            <li><strong>Exact Domain:</strong> <code>facebook.com</code> - blocks only that exact domain</li>
+            <li><strong>Wildcard Pattern:</strong> <code>*.facebook.com</code> - blocks all subdomains</li>
+            <li><strong>Wildcard Pattern:</strong> <code>*facebook*/videos*</code> - blocks URLs matching pattern</li>
+            <li><strong>Keyword Match:</strong> <code>reddit</code> - blocks any URL containing the keyword</li>
+          </ul>
+        </div>
+
+        <div id="sitesTable"></div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Active Temporary Unblocks</h2>
+        <div id="tempUnblocksList"></div>
+      </section>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-success">Save Settings</button>
+        <button id="resetBtn" class="btn btn-danger">Reset to Defaults</button>
+      </div>
+
+      <div id="saveStatus" class="save-status"></div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

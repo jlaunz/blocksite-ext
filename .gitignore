@@ -1,0 +1,34 @@
+# Chrome Extension specific
+*.crx
+*.pem
+*.zip
+
+# Development files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*~
+*.swp
+*.swo
+.tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Node (if added later)
+node_modules/
+package-lock.json
+yarn.lock

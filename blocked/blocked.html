@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Blocked - FocusGuard</title>
+  <link rel="stylesheet" href="blocked.css">
+</head>
+<body>
+  <div class="container">
+    <div class="blocked-card">
+      <div class="icon">🛡️</div>
+      <h1>Site Blocked</h1>
+      <p class="blocked-url">This site is blocked to help you stay focused.</p>
+      <p class="message">You blocked this site to avoid distractions. Stay strong!</p>
+
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-value" id="blockCount">0</span>
+          <span class="stat-label">Times Blocked Today</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="goBackBtn" class="btn btn-primary">← Go Back</button>
+        <button id="tempUnblockBtn" class="btn btn-secondary">Temporarily Unblock</button>
+      </div>
+
+      <div id="challengeContainer" class="challenge-container" style="display: none;">
+        <div class="challenge-header">
+          <h2>Complete the Challenge</h2>
+          <p id="challengeInstructions"></p>
+        </div>
+
+        <!-- Math Challenge -->
+        <div id="mathChallenge" class="challenge" style="display: none;">
+          <div class="math-problem">
+            <p class="problem-text" id="mathProblem"></p>
+            <input type="number" id="mathAnswer" placeholder="Your answer" />
+            <button id="submitMathBtn" class="btn btn-success">Submit</button>
+          </div>
+          <p id="mathError" class="error-message"></p>
+        </div>
+
+        <!-- Typing Challenge -->
+        <div id="typingChallenge" class="challenge" style="display: none;">
+          <div class="typing-area">
+            <p class="quote-display" id="quoteDisplay"></p>
+            <input type="text" id="typingInput" placeholder="Type the phrase exactly..." />
+            <button id="submitTypingBtn" class="btn btn-success">Submit</button>
+          </div>
+          <p id="typingError" class="error-message"></p>
+        </div>
+
+        <!-- Wait Challenge -->
+        <div id="waitChallenge" class="challenge" style="display: none;">
+          <div class="wait-timer">
+            <div class="timer-circle">
+              <svg width="120" height="120">
+                <circle cx="60" cy="60" r="54" class="timer-bg"></circle>
+                <circle cx="60" cy="60" r="54" class="timer-progress" id="timerCircle"></circle>
+              </svg>
+              <div class="timer-text" id="timerText">30</div>
+            </div>
+            <p class="wait-message">Please wait before you can unblock this site...</p>
+          </div>
+          <button id="submitWaitBtn" class="btn btn-success" disabled>Continue</button>
+        </div>
+
+        <!-- Mixed Challenge -->
+        <div id="mixedChallenge" class="challenge" style="display: none;">
+          <div id="mixedMathPart" style="display: block;">
+            <div class="math-problem">
+              <p class="problem-text" id="mixedMathProblem"></p>
+              <input type="number" id="mixedMathAnswer" placeholder="Your answer" />
+              <button id="submitMixedMathBtn" class="btn btn-success">Submit</button>
+            </div>
+            <p id="mixedMathError" class="error-message"></p>
+          </div>
+
+          <div id="mixedWaitPart" style="display: none;">
+            <div class="wait-timer">
+              <div class="timer-circle">
+                <svg width="120" height="120">
+                  <circle cx="60" cy="60" r="54" class="timer-bg"></circle>
+                  <circle cx="60" cy="60" r="54" class="timer-progress" id="mixedTimerCircle"></circle>
+                </svg>
+                <div class="timer-text" id="mixedTimerText">30</div>
+              </div>
+              <p class="wait-message">Now wait before continuing...</p>
+            </div>
+            <button id="submitMixedWaitBtn" class="btn btn-success" disabled>Continue</button>
+          </div>
+        </div>
+
+        <div class="challenge-footer">
+          <button id="cancelChallengeBtn" class="btn btn-link">Cancel</button>
+        </div>
+      </div>
+
+      <div class="motivational-quotes">
+        <p class="quote" id="motivationalQuote"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="blocked.js"></script>
+</body>
+</html>
