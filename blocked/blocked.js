@@ -3,6 +3,7 @@
 let blockedUrl = '';
 let settings = {};
 let blockStats = {};
+let challengeInProgress = false; // Prevent double-clicking
 
 // Motivational quotes
 const quotes = [
@@ -125,8 +126,21 @@ function showRandomQuote() {
 }
 
 function showChallenge() {
+  // Prevent double-clicking
+  if (challengeInProgress) {
+    console.log('[FocusGuard] Challenge already in progress, ignoring click');
+    return;
+  }
+
+  challengeInProgress = true;
   const challengeType = settings.challengeType || 'math';
   const container = document.getElementById('challengeContainer');
+
+  // Clear any existing timer
+  if (waitTimer) {
+    clearInterval(waitTimer);
+    waitTimer = null;
+  }
 
   // Hide all challenges first
   document.querySelectorAll('.challenge').forEach(el => el.style.display = 'none');
@@ -165,6 +179,13 @@ function showChallenge() {
 }
 
 function hideChallenge() {
+  // Clear any running timer
+  if (waitTimer) {
+    clearInterval(waitTimer);
+    waitTimer = null;
+  }
+
+  challengeInProgress = false;
   document.getElementById('challengeContainer').style.display = 'none';
 }
 
@@ -361,15 +382,30 @@ function startTimer(textId, circleId, duration, onComplete) {
 async function grantTemporaryUnblock() {
   const duration = 15; // 15 minutes
 
+  // Make sure we have a valid URL
+  if (!blockedUrl) {
+    console.error('[FocusGuard] No blocked URL available');
+    alert('Error: Cannot determine blocked URL. Please close this tab and try again.');
+    return;
+  }
+
+  console.log('[FocusGuard] Granting temporary unblock for:', blockedUrl);
+
   const response = await chrome.runtime.sendMessage({
     action: 'addTemporaryUnblock',
     url: blockedUrl,
     duration: duration
   });
 
+  console.log('[FocusGuard] Temporary unblock response:', response);
+
   if (response.success) {
-    // Redirect to the original URL
-    window.location.href = blockedUrl;
+    // Wait a moment for the rules to update
+    setTimeout(() => {
+      // Redirect to the original URL
+      console.log('[FocusGuard] Redirecting to:', blockedUrl);
+      window.location.href = blockedUrl;
+    }, 500);
   } else {
     alert('Failed to unblock site. Please try again.');
   }
