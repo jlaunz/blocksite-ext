@@ -7,6 +7,14 @@ async function init() {
   attachEventListeners();
   updateTempUnblocksList();
   setInterval(updateTempUnblocksList, 1000); // Update every second
+
+  // Listen for storage changes to update immediately
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.temporaryUnblocks) {
+      console.log('[FocusGuard Options] Temporary unblocks changed, updating list');
+      updateTempUnblocksList();
+    }
+  });
 }
 
 function attachEventListeners() {
