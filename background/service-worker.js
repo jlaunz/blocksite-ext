@@ -204,6 +204,25 @@ async function updateBlockingRules() {
   });
 
   console.log('[FocusGuard] Updated blocking rules, active rules:', newRules.length);
+
+  // Check all open tabs and reload any that are now blocked
+  const tabs = await chrome.tabs.query({});
+  for (const tab of tabs) {
+    if (!tab.url) continue;
+
+    try {
+      const url = new URL(tab.url);
+      if (url.protocol === 'chrome:' || url.protocol === 'chrome-extension:') continue;
+
+      const shouldBlock = await checkIfBlocked(tab.url);
+      if (shouldBlock) {
+        // Reload the tab so the blocking rule takes effect
+        await chrome.tabs.reload(tab.id);
+      }
+    } catch (error) {
+      // Invalid URL, skip
+    }
+  }
 }
 
 // Check if a URL matches blocking rules
