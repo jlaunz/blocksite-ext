@@ -33,8 +33,11 @@ const typingPhrases = [
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-  // Get blocked URL from referrer (the page that was redirected)
-  blockedUrl = document.referrer;
+  // Get blocked URL from query parameter
+  const params = new URLSearchParams(window.location.search);
+  blockedUrl = params.get('url');
+
+  console.log('[FocusGuard] Blocked URL from params:', blockedUrl);
 
   if (blockedUrl) {
     try {
