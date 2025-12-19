@@ -36,6 +36,27 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // Update blocking rules on startup
 updateBlockingRules();
 
+// Intercept navigation and redirect blocked sites
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  if (details.frameId !== 0) return; // Only main frame
+
+  const url = details.url;
+
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.protocol === 'chrome:' || urlObj.protocol === 'chrome-extension:') return;
+    if (url.includes('/blocked/blocked.html')) return; // Don't redirect our own page
+
+    const blocked = await checkIfBlocked(url);
+    if (blocked) {
+      const blockedPageUrl = chrome.runtime.getURL('blocked/blocked.html') + '?url=' + encodeURIComponent(url);
+      chrome.tabs.update(details.tabId, { url: blockedPageUrl });
+    }
+  } catch (error) {
+    // Invalid URL, ignore
+  }
+});
+
 // Update declarativeNetRequest rules based on blocked sites
 async function updateBlockingRules() {
   const data = await chrome.storage.local.get(['blockedSites', 'temporaryUnblocks']);
