@@ -14,6 +14,7 @@ function attachEventListeners() {
   document.getElementById('resetBtn').addEventListener('click', resetSettings);
   document.getElementById('addSiteBtn').addEventListener('click', addSite);
   document.getElementById('destroyAllBtn').addEventListener('click', destroyAll);
+  document.getElementById('savePasswordBtn').addEventListener('click', savePassword);
   document.getElementById('newSitePattern').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addSite();
   });
@@ -52,10 +53,42 @@ async function loadSettings() {
   document.getElementById('waitDuration').value = data.waitDuration || 30;
 
   // Load password
-  document.getElementById('deletePassword').value = data.deletePassword || '';
+  const password = data.deletePassword || '';
+  document.getElementById('deletePassword').value = password;
+
+  // Show password status
+  const statusEl = document.getElementById('passwordStatus');
+  if (password) {
+    statusEl.innerHTML = '<span style="color: #10b981;">✓ Password is set (••••••)</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color: #ef4444;">⚠ No password set - delete/disable protection disabled</span>';
+  }
 
   // Load blocked sites
   loadBlockedSites();
+}
+
+async function savePassword() {
+  const password = document.getElementById('deletePassword').value.trim();
+  const statusEl = document.getElementById('passwordStatus');
+
+  if (!password) {
+    statusEl.innerHTML = '<span style="color: #ef4444;">❌ Password cannot be empty!</span>';
+    return;
+  }
+
+  if (password.length < 4) {
+    statusEl.innerHTML = '<span style="color: #ef4444;">❌ Password must be at least 4 characters!</span>';
+    return;
+  }
+
+  await chrome.storage.local.set({ deletePassword: password });
+
+  statusEl.innerHTML = '<span style="color: #10b981;">✓ Password saved successfully!</span>';
+
+  setTimeout(() => {
+    statusEl.innerHTML = '<span style="color: #10b981;">✓ Password is set (••••••)</span>';
+  }, 2000);
 }
 
 async function loadBlockedSites() {
