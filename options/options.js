@@ -231,6 +231,7 @@ async function updateTempUnblocksList() {
     const remaining = expiry - now;
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
+    const safeUrl = escapeHtml(url);
 
     return `
       <div class="temp-unblock-item">
@@ -238,10 +239,18 @@ async function updateTempUnblocksList() {
           <div class="temp-unblock-url">${escapeHtml(new URL(url).hostname)}</div>
           <div class="temp-unblock-expiry">Expires in ${minutes}m ${seconds}s</div>
         </div>
-        <button class="btn btn-danger btn-small" onclick="removeUnblock('${escapeHtml(url)}')">Revoke</button>
+        <button class="btn btn-danger btn-small" data-url="${safeUrl}">Revoke</button>
       </div>
     `;
   }).join('');
+
+  // Attach event listeners to revoke buttons
+  container.querySelectorAll('.btn-danger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.getAttribute('data-url');
+      removeUnblock(url);
+    });
+  });
 }
 
 async function removeUnblock(url) {
@@ -258,8 +267,6 @@ async function removeUnblock(url) {
   showStatus('Temporary unblock revoked', 'success');
 }
 
-// Make removeUnblock available globally for inline onclick
-window.removeUnblock = removeUnblock;
 
 function showStatus(message, type) {
   const statusEl = document.getElementById('saveStatus');
