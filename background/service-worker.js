@@ -89,11 +89,11 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
+              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
             }
           },
           condition: {
-            regexFilter: `^https?://([a-z0-9-]+\\.)?${domain.replace(/\./g, '\\.')}(/.*)?$`,
+            regexFilter: `^(https?://(?:[a-z0-9-]+\\.)?${domain.replace(/\./g, '\\.')}(?:/.*)?)$`,
             resourceTypes: ['main_frame']
           }
         });
@@ -111,17 +111,18 @@ async function updateBlockingRules() {
         }
 
         if (urlFilter) {
+          const regexPattern = pattern.replace(/\*/g, '.*').replace(/\./g, '\\.');
           newRules.push({
             id: ruleId++,
             priority: 1,
             action: {
               type: 'redirect',
               redirect: {
-                regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
+                regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
               }
             },
             condition: {
-              regexFilter: pattern.replace(/\*/g, '.*').replace(/\./g, '\\.'),
+              regexFilter: `^(${regexPattern})$`,
               resourceTypes: ['main_frame']
             }
           });
@@ -136,11 +137,11 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
+              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
             }
           },
           condition: {
-            regexFilter: `.*${pattern.replace(/\./g, '\\.')}.*`,
+            regexFilter: `^(.*${pattern.replace(/\./g, '\\.')}.*?)$`,
             resourceTypes: ['main_frame']
           }
         });
