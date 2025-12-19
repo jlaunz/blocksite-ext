@@ -150,12 +150,18 @@ async function updateBlockingRules() {
   }
 
   // Update rules
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: existingRuleIds,
-    addRules: newRules
-  });
+  try {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: existingRuleIds,
+      addRules: newRules
+    });
 
-  console.log('[FocusGuard] Updated blocking rules, active rules:', newRules.length);
+    console.log('[FocusGuard] Updated blocking rules, active rules:', newRules.length);
+    console.log('[FocusGuard] Sample rules:', JSON.stringify(newRules.slice(0, 2), null, 2));
+  } catch (error) {
+    console.error('[FocusGuard] Error updating rules:', error);
+    console.error('[FocusGuard] Failed rules:', JSON.stringify(newRules, null, 2));
+  }
 
   // Check all open tabs and reload any that are now blocked
   const tabs = await chrome.tabs.query({});
