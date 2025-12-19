@@ -62,7 +62,22 @@ async function loadSettings() {
 
   // Load password
   const password = data.deletePassword || '';
-  document.getElementById('deletePassword').value = password;
+  document.getElementById('deletePassword').value = '';
+
+  // Show/hide old password field and update labels
+  const oldPasswordGroup = document.getElementById('oldPasswordGroup');
+  const newPasswordLabel = document.getElementById('newPasswordLabel');
+  if (password) {
+    // Password exists - show old password field
+    oldPasswordGroup.style.display = 'block';
+    newPasswordLabel.textContent = 'New Password:';
+    document.getElementById('deletePassword').placeholder = 'Enter new password';
+  } else {
+    // No password - hide old password field
+    oldPasswordGroup.style.display = 'none';
+    newPasswordLabel.textContent = 'Password:';
+    document.getElementById('deletePassword').placeholder = 'Set a password';
+  }
 
   // Show password status
   const statusEl = document.getElementById('passwordStatus');
@@ -77,26 +92,52 @@ async function loadSettings() {
 }
 
 async function savePassword() {
-  const password = document.getElementById('deletePassword').value.trim();
+  const newPassword = document.getElementById('deletePassword').value.trim();
+  const oldPasswordInput = document.getElementById('oldPassword').value.trim();
   const statusEl = document.getElementById('passwordStatus');
 
-  if (!password) {
-    statusEl.innerHTML = '<span style="color: #ef4444;">❌ Password cannot be empty!</span>';
+  // Check if there's an existing password
+  const data = await chrome.storage.local.get(['deletePassword']);
+  const currentPassword = data.deletePassword || '';
+
+  // If password exists, verify old password first
+  if (currentPassword) {
+    if (!oldPasswordInput) {
+      statusEl.innerHTML = '<span style="color: #ef4444;">❌ Please enter your current password!</span>';
+      return;
+    }
+
+    if (oldPasswordInput !== currentPassword) {
+      statusEl.innerHTML = '<span style="color: #ef4444;">❌ Current password is incorrect!</span>';
+      document.getElementById('oldPassword').value = '';
+      return;
+    }
+  }
+
+  // Validate new password
+  if (!newPassword) {
+    statusEl.innerHTML = '<span style="color: #ef4444;">❌ New password cannot be empty!</span>';
     return;
   }
 
-  if (password.length < 4) {
+  if (newPassword.length < 4) {
     statusEl.innerHTML = '<span style="color: #ef4444;">❌ Password must be at least 4 characters!</span>';
     return;
   }
 
-  await chrome.storage.local.set({ deletePassword: password });
+  // Save the new password
+  await chrome.storage.local.set({ deletePassword: newPassword });
+
+  // Clear input fields
+  document.getElementById('deletePassword').value = '';
+  document.getElementById('oldPassword').value = '';
 
   statusEl.innerHTML = '<span style="color: #10b981;">✓ Password saved successfully!</span>';
 
-  setTimeout(() => {
-    statusEl.innerHTML = '<span style="color: #10b981;">✓ Password is set (••••••)</span>';
-  }, 2000);
+  // Reload settings to update UI
+  setTimeout(async () => {
+    await loadSettings();
+  }, 1500);
 }
 
 async function loadBlockedSites() {
@@ -380,17 +421,23 @@ async function promptPasswordAndDelete(id, correctPassword) {
 }
 
 async function destroyAll() {
-  if (!confirm('⚠️ WARNING: This will delete ALL blocked sites!\n\nAre you absolutely sure?')) {
+  if (!confirm('⚠️ WARNING: This will delete ALL blocked sites AND remove the password!\n\nAre you absolutely sure?')) {
     return;
   }
 
-  if (!confirm('This action cannot be undone. Delete everything?')) {
+  if (!confirm('This action cannot be undone. Reset everything?')) {
     return;
   }
 
-  await chrome.storage.local.set({ blockedSites: [] });
+  // Clear both blocked sites and password
+  await chrome.storage.local.set({
+    blockedSites: [],
+    deletePassword: ''
+  });
+
   await loadBlockedSites();
-  showStatus('All blocked sites destroyed', 'success');
+  await loadSettings(); // Reload to update password UI
+  showStatus('All blocked sites and password cleared!', 'success');
 }
 
 async function saveSettings() {

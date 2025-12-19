@@ -52,10 +52,19 @@
       <section class="settings-section">
         <h2>Delete Protection</h2>
         <div class="setting-group">
-          <label for="deletePassword">Password (for deleting/disabling sites):</label>
+          <label>Password (for deleting/disabling sites):</label>
+
+          <div id="oldPasswordGroup" style="display: none; margin-bottom: 10px;">
+            <label for="oldPassword" style="font-size: 13px; color: #666;">Current Password:</label>
+            <input type="password" id="oldPassword" placeholder="Enter current password" style="width: 100%;" />
+          </div>
+
           <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="password" id="deletePassword" placeholder="Set a password" style="flex: 1;" />
-            <button id="savePasswordBtn" class="btn btn-primary">Save Password</button>
+            <div style="flex: 1;">
+              <label for="deletePassword" id="newPasswordLabel" style="font-size: 13px; color: #666; display: block; margin-bottom: 4px;">New Password:</label>
+              <input type="password" id="deletePassword" placeholder="Set a password" style="width: 100%;" />
+            </div>
+            <button id="savePasswordBtn" class="btn btn-primary" style="align-self: flex-end;">Save Password</button>
           </div>
           <small>Required to delete or disable blocked sites (5 min wait + password)</small>
           <div id="passwordStatus" style="margin-top: 8px; font-size: 13px;"></div>
@@ -86,8 +95,16 @@
 
         <div id="sitesTable"></div>
 
-        <div style="margin-top: 20px; text-align: center;">
-          <button id="destroyAllBtn" class="btn btn-danger">Destroy All Blocked Sites</button>
+        <div style="margin-top: 20px; padding: 15px; background: #fee; border: 1px solid #fcc; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 8px;">
+            <strong style="color: #c00;">⚠️ Danger Zone</strong>
+          </div>
+          <div style="text-align: center;">
+            <button id="destroyAllBtn" class="btn btn-danger">Reset Everything (Clear All Sites + Password)</button>
+          </div>
+          <div style="text-align: center; margin-top: 6px; font-size: 12px; color: #666;">
+            This will delete all blocked sites and remove the password protection
+          </div>
         </div>
       </section>
 
