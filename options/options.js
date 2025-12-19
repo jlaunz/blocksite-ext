@@ -441,10 +441,18 @@ async function updateTempUnblocksList() {
     const seconds = Math.floor((remaining % 60000) / 1000);
     const safeUrl = escapeHtml(url);
 
+    let hostname = url;
+    try {
+      hostname = new URL(url).hostname;
+    } catch (error) {
+      console.error('[FocusGuard] Invalid URL in temporary unblocks:', url);
+      hostname = url;
+    }
+
     return `
       <div class="temp-unblock-item">
         <div>
-          <div class="temp-unblock-url">${escapeHtml(new URL(url).hostname)}</div>
+          <div class="temp-unblock-url">${escapeHtml(hostname)}</div>
           <div class="temp-unblock-expiry">Expires in ${minutes}m ${seconds}s</div>
         </div>
         <button class="btn btn-danger btn-small" data-url="${safeUrl}">Revoke</button>
