@@ -25,27 +25,34 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
 });
 
-// Listen for navigation events
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
-  // Only handle main frame navigations
-  if (details.frameId !== 0) return;
+// Listen for tab updates to block URLs
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Only process when URL changes and is committed
+  if (changeInfo.status !== 'loading' || !tab.url) return;
 
-  const url = details.url;
-  const urlObj = new URL(url);
+  const url = tab.url;
 
-  // Skip chrome:// and extension pages
-  if (urlObj.protocol === 'chrome:' || urlObj.protocol === 'chrome-extension:') {
-    return;
-  }
+  try {
+    const urlObj = new URL(url);
 
-  // Check if URL should be blocked
-  const shouldBlock = await checkIfBlocked(url);
+    // Skip chrome://, extension pages, and our own blocked page
+    if (urlObj.protocol === 'chrome:' ||
+        urlObj.protocol === 'chrome-extension:' ||
+        url.includes('/blocked/blocked.html')) {
+      return;
+    }
 
-  if (shouldBlock) {
-    // Redirect to blocked page
-    chrome.tabs.update(details.tabId, {
-      url: chrome.runtime.getURL('blocked/blocked.html') + '?url=' + encodeURIComponent(url)
-    });
+    // Check if URL should be blocked
+    const shouldBlock = await checkIfBlocked(url);
+
+    if (shouldBlock) {
+      // Redirect to blocked page
+      const blockedPageUrl = chrome.runtime.getURL('blocked/blocked.html') + '?url=' + encodeURIComponent(url);
+      await chrome.tabs.update(tabId, { url: blockedPageUrl });
+    }
+  } catch (error) {
+    // Invalid URL, ignore
+    console.debug('Error processing URL:', error);
   }
 });
 
@@ -60,6 +67,8 @@ async function checkIfBlocked(url) {
     const data = await chrome.storage.local.get(['blockedSites', 'temporaryUnblocks']);
     const blockedSites = data.blockedSites || [];
     const temporaryUnblocks = data.temporaryUnblocks || {};
+
+    console.log('[FocusGuard] Checking URL:', hostname, '| Blocked sites count:', blockedSites.length);
 
     // Check if site has temporary unblock that's still valid
     const now = Date.now();
@@ -89,8 +98,11 @@ async function checkIfBlocked(url) {
       // Match based on rule type
       switch (site.type) {
         case 'exact':
-          // Exact domain match
-          if (hostname === pattern || hostname === 'www.' + pattern) {
+          // Exact domain match (normalize www)
+          const normalizedHostname = hostname.replace(/^www\./, '');
+          const normalizedPattern = pattern.replace(/^www\./, '');
+          if (normalizedHostname === normalizedPattern) {
+            console.log('[FocusGuard] ✓ BLOCKED by exact match:', pattern);
             return true;
           }
           break;
@@ -100,12 +112,14 @@ async function checkIfBlocked(url) {
           if (pattern.startsWith('*.')) {
             const domain = pattern.substring(2);
             if (hostname === domain || hostname.endsWith('.' + domain)) {
+              console.log('[FocusGuard] ✓ BLOCKED by wildcard subdomain:', pattern);
               return true;
             }
           } else if (pattern.includes('*')) {
             // General wildcard pattern
             const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
             if (regex.test(fullUrl)) {
+              console.log('[FocusGuard] ✓ BLOCKED by wildcard pattern:', pattern);
               return true;
             }
           }
@@ -114,6 +128,7 @@ async function checkIfBlocked(url) {
         case 'keyword':
           // Keyword anywhere in URL
           if (fullUrl.includes(pattern)) {
+            console.log('[FocusGuard] ✓ BLOCKED by keyword:', pattern);
             return true;
           }
           break;

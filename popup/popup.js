@@ -29,7 +29,7 @@ async function loadCurrentSite() {
     const data = await chrome.storage.local.get(['blockedSites']);
     const blockedSites = data.blockedSites || [];
     const isBlocked = blockedSites.some(site =>
-      site.enabled && (site.pattern === hostname || site.pattern === '*.* + hostname)
+      site.enabled && (site.pattern === hostname || site.pattern === '*.' + hostname)
     );
 
     const btn = document.getElementById('blockCurrentBtn');
