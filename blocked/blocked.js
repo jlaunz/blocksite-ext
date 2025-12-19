@@ -32,9 +32,8 @@ const typingPhrases = [
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-  // Get blocked URL from query parameter
-  const params = new URLSearchParams(window.location.search);
-  blockedUrl = params.get('url');
+  // Get blocked URL from referrer (the page that was redirected)
+  blockedUrl = document.referrer;
 
   if (blockedUrl) {
     try {
@@ -43,6 +42,9 @@ async function init() {
     } catch {
       document.querySelector('.blocked-url').textContent = 'This site';
     }
+  } else {
+    // Fallback: show generic message
+    document.querySelector('.blocked-url').textContent = 'This site is blocked';
   }
 
   // Load settings

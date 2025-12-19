@@ -89,16 +89,7 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              transform: {
-                scheme: 'chrome-extension',
-                host: chrome.runtime.id,
-                path: '/blocked/blocked.html',
-                queryTransform: {
-                  addOrReplaceParams: [
-                    { key: 'url', value: '{url}' }
-                  ]
-                }
-              }
+              extensionPath: '/blocked/blocked.html'
             }
           },
           condition: {
@@ -113,16 +104,7 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              transform: {
-                scheme: 'chrome-extension',
-                host: chrome.runtime.id,
-                path: '/blocked/blocked.html',
-                queryTransform: {
-                  addOrReplaceParams: [
-                    { key: 'url', value: '{url}' }
-                  ]
-                }
-              }
+              extensionPath: '/blocked/blocked.html'
             }
           },
           condition: {
@@ -149,16 +131,7 @@ async function updateBlockingRules() {
             action: {
               type: 'redirect',
               redirect: {
-                transform: {
-                  scheme: 'chrome-extension',
-                  host: chrome.runtime.id,
-                  path: '/blocked/blocked.html',
-                  queryTransform: {
-                    addOrReplaceParams: [
-                      { key: 'url', value: '{url}' }
-                    ]
-                  }
-                }
+                extensionPath: '/blocked/blocked.html'
               }
             },
             condition: {
@@ -177,16 +150,7 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              transform: {
-                scheme: 'chrome-extension',
-                host: chrome.runtime.id,
-                path: '/blocked/blocked.html',
-                queryTransform: {
-                  addOrReplaceParams: [
-                    { key: 'url', value: '{url}' }
-                  ]
-                }
-              }
+              extensionPath: '/blocked/blocked.html'
             }
           },
           condition: {
