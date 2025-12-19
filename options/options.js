@@ -250,7 +250,12 @@ async function removeUnblock(url) {
 
   delete temporaryUnblocks[url];
   await chrome.storage.local.set({ temporaryUnblocks });
+
+  // Force update blocking rules in background
+  chrome.runtime.sendMessage({ action: 'forceUpdateRules' });
+
   updateTempUnblocksList();
+  showStatus('Temporary unblock revoked', 'success');
 }
 
 // Make removeUnblock available globally for inline onclick

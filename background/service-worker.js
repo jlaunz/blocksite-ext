@@ -316,6 +316,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'getSettings') {
     chrome.storage.local.get(null).then(sendResponse);
     return true;
+  } else if (message.action === 'forceUpdateRules') {
+    updateBlockingRules().then(() => sendResponse({ success: true }));
+    return true;
   }
 });
 
@@ -329,6 +332,9 @@ async function addTemporaryUnblock(url, durationMinutes) {
     temporaryUnblocks[url] = expiry;
 
     await chrome.storage.local.set({ temporaryUnblocks });
+
+    // Force immediate rule update to unblock the site
+    await updateBlockingRules();
 
     return { success: true, expiry };
   } catch (error) {
