@@ -83,17 +83,18 @@ async function updateBlockingRules() {
       case 'exact':
         // Match exact domain with or without www
         const domain = pattern.replace(/^www\./, '');
+        const escapedDomain = domain.replace(/\./g, '\\.');
         newRules.push({
           id: ruleId++,
           priority: 1,
           action: {
             type: 'redirect',
             redirect: {
-              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
+              regexSubstitution: `chrome-extension://${chrome.runtime.id}/blocked/blocked.html?url=\\1`
             }
           },
           condition: {
-            regexFilter: `^(https?://(?:[a-z0-9-]+\\.)?${domain.replace(/\./g, '\\.')}(?:/.*)?)$`,
+            regexFilter: `^(https?://(?:[a-z0-9-]+\\.)?${escapedDomain}(?:/.*)?)$`,
             resourceTypes: ['main_frame']
           }
         });
@@ -118,7 +119,7 @@ async function updateBlockingRules() {
             action: {
               type: 'redirect',
               redirect: {
-                regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
+                regexSubstitution: `chrome-extension://${chrome.runtime.id}/blocked/blocked.html?url=\\1`
               }
             },
             condition: {
@@ -131,17 +132,18 @@ async function updateBlockingRules() {
 
       case 'keyword':
         // Keyword match
+        const escapedKeyword = pattern.replace(/\./g, '\\.');
         newRules.push({
           id: ruleId++,
           priority: 1,
           action: {
             type: 'redirect',
             redirect: {
-              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\1'
+              regexSubstitution: `chrome-extension://${chrome.runtime.id}/blocked/blocked.html?url=\\1`
             }
           },
           condition: {
-            regexFilter: `^(.*${pattern.replace(/\./g, '\\.')}.*?)$`,
+            regexFilter: `^(.*${escapedKeyword}.*?)$`,
             resourceTypes: ['main_frame']
           }
         });
