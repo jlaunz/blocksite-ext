@@ -431,12 +431,16 @@ async function updateTempUnblocksList() {
   const data = await chrome.storage.local.get(['temporaryUnblocks']);
   const temporaryUnblocks = data.temporaryUnblocks || {};
 
+  console.log('[FocusGuard Options] Temporary unblocks:', temporaryUnblocks);
+
   const container = document.getElementById('tempUnblocksList');
   const now = Date.now();
 
   const activeUnblocks = Object.entries(temporaryUnblocks)
     .filter(([_, expiry]) => now < expiry)
     .sort(([_, a], [__, b]) => a - b);
+
+  console.log('[FocusGuard Options] Active unblocks count:', activeUnblocks.length);
 
   if (activeUnblocks.length === 0) {
     container.innerHTML = '<div class="empty-state">No active temporary unblocks</div>';
