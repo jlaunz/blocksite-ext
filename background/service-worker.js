@@ -8,7 +8,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     redirectUrl: 'https://www.google.com',
     challengeType: 'math', // 'math', 'typing', 'wait', 'mixed'
     waitDuration: 30, // seconds
-    temporaryUnblocks: {} // { url: expiryTimestamp }
+    temporaryUnblocks: {}, // { url: expiryTimestamp }
+    deletePassword: '' // Password for deleting/disabling sites
   };
 
   const existing = await chrome.storage.local.get(Object.keys(defaults));

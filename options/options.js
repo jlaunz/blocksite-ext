@@ -157,21 +157,106 @@ async function addSite() {
   showStatus('Site added successfully!', 'success');
 }
 
-async function toggleSite(id) {
-  const data = await chrome.storage.local.get(['blockedSites']);
-  const blockedSites = data.blockedSites || [];
+// Track delete/disable countdowns
+const deleteCountdowns = {};
+const toggleCountdowns = {};
 
+async function toggleSite(id) {
+  const data = await chrome.storage.local.get(['blockedSites', 'deletePassword']);
+  const blockedSites = data.blockedSites || [];
+  const password = data.deletePassword;
   const site = blockedSites.find(s => s.id === id);
-  if (site) {
-    site.enabled = !site.enabled;
+
+  if (!site) return;
+
+  // If enabling (site is currently disabled), allow immediately
+  if (!site.enabled) {
+    site.enabled = true;
     await chrome.storage.local.set({ blockedSites });
     await loadBlockedSites();
-    showStatus(`Site ${site.enabled ? 'enabled' : 'disabled'}`, 'success');
+    showStatus('Site enabled', 'success');
+    return;
   }
+
+  // If disabling (site is currently enabled), require protection
+  if (!password) {
+    alert('Please set a delete password in settings first!');
+    return;
+  }
+
+  // Check if countdown already started for this site
+  if (toggleCountdowns[id]) {
+    alert('Disable countdown already in progress for this site!');
+    return;
+  }
+
+  // Start 5 minute countdown
+  const countdown = 300; // 5 minutes in seconds
+  toggleCountdowns[id] = {
+    remaining: countdown,
+    startTime: Date.now()
+  };
+
+  // Update UI to show countdown
+  updateToggleCountdown(id);
+
+  const countdownInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - toggleCountdowns[id].startTime) / 1000);
+    toggleCountdowns[id].remaining = countdown - elapsed;
+
+    if (toggleCountdowns[id].remaining <= 0) {
+      clearInterval(countdownInterval);
+      // Show password prompt
+      promptPasswordAndToggle(id, password);
+    } else {
+      updateToggleCountdown(id);
+    }
+  }, 1000);
 }
 
-// Track delete countdowns
-const deleteCountdowns = {};
+function updateToggleCountdown(id) {
+  const btn = document.getElementById(`toggle-${id}`);
+  if (!btn || !toggleCountdowns[id]) return;
+
+  const remaining = toggleCountdowns[id].remaining;
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+
+  btn.textContent = `Wait ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+}
+
+async function promptPasswordAndToggle(id, correctPassword) {
+  const enteredPassword = prompt('Enter your password to disable this site:');
+
+  if (!enteredPassword) {
+    delete toggleCountdowns[id];
+    await loadBlockedSites();
+    showStatus('Disable cancelled', 'error');
+    return;
+  }
+
+  if (enteredPassword !== correctPassword) {
+    delete toggleCountdowns[id];
+    await loadBlockedSites();
+    showStatus('Incorrect password! Disable cancelled.', 'error');
+    return;
+  }
+
+  // Password correct, disable the site
+  const data = await chrome.storage.local.get(['blockedSites']);
+  const blockedSites = data.blockedSites || [];
+  const site = blockedSites.find(s => s.id === id);
+
+  if (site) {
+    site.enabled = false;
+    await chrome.storage.local.set({ blockedSites });
+    delete toggleCountdowns[id];
+    await loadBlockedSites();
+    showStatus('Site disabled', 'success');
+  }
+}
 
 async function deleteSite(id) {
   const data = await chrome.storage.local.get(['deletePassword', 'blockedSites']);
