@@ -25,36 +25,186 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
 });
 
-// Listen for tab updates to block URLs
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  // Only process when URL changes and is committed
-  if (changeInfo.status !== 'loading' || !tab.url) return;
-
-  const url = tab.url;
-
-  try {
-    const urlObj = new URL(url);
-
-    // Skip chrome://, extension pages, and our own blocked page
-    if (urlObj.protocol === 'chrome:' ||
-        urlObj.protocol === 'chrome-extension:' ||
-        url.includes('/blocked/blocked.html')) {
-      return;
-    }
-
-    // Check if URL should be blocked
-    const shouldBlock = await checkIfBlocked(url);
-
-    if (shouldBlock) {
-      // Redirect to blocked page
-      const blockedPageUrl = chrome.runtime.getURL('blocked/blocked.html') + '?url=' + encodeURIComponent(url);
-      await chrome.tabs.update(tabId, { url: blockedPageUrl });
-    }
-  } catch (error) {
-    // Invalid URL, ignore
-    console.debug('Error processing URL:', error);
+// Update blocking rules when storage changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && (changes.blockedSites || changes.temporaryUnblocks)) {
+    updateBlockingRules();
   }
 });
+
+// Update blocking rules on startup
+updateBlockingRules();
+
+// Update declarativeNetRequest rules based on blocked sites
+async function updateBlockingRules() {
+  const data = await chrome.storage.local.get(['blockedSites', 'temporaryUnblocks']);
+  const blockedSites = data.blockedSites || [];
+  const temporaryUnblocks = data.temporaryUnblocks || {};
+
+  // Remove expired temporary unblocks
+  const now = Date.now();
+  const activeUnblocks = Object.entries(temporaryUnblocks)
+    .filter(([_, expiry]) => now < expiry)
+    .map(([url, _]) => {
+      try {
+        return new URL(url).hostname;
+      } catch {
+        return null;
+      }
+    })
+    .filter(h => h);
+
+  // Get existing rule IDs and remove them
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const existingRuleIds = existingRules.map(rule => rule.id);
+
+  // Build new rules
+  const newRules = [];
+  let ruleId = 1;
+
+  for (const site of blockedSites) {
+    if (!site.enabled) continue;
+
+    const pattern = site.pattern.toLowerCase();
+    let urlFilter = null;
+
+    // Check if temporarily unblocked
+    const isUnblocked = activeUnblocks.some(host => {
+      const normalizedHost = host.replace(/^www\./, '');
+      const normalizedPattern = pattern.replace(/^www\./, '');
+      return normalizedHost === normalizedPattern;
+    });
+
+    if (isUnblocked) continue;
+
+    // Convert our patterns to declarativeNetRequest format
+    switch (site.type) {
+      case 'exact':
+        // Match exact domain with or without www
+        const domain = pattern.replace(/^www\./, '');
+        newRules.push({
+          id: ruleId++,
+          priority: 1,
+          action: {
+            type: 'redirect',
+            redirect: {
+              transform: {
+                scheme: 'chrome-extension',
+                host: chrome.runtime.id,
+                path: '/blocked/blocked.html',
+                queryTransform: {
+                  addOrReplaceParams: [
+                    { key: 'url', value: '{url}' }
+                  ]
+                }
+              }
+            }
+          },
+          condition: {
+            urlFilter: `||${domain}`,
+            resourceTypes: ['main_frame']
+          }
+        });
+        // Also match www version
+        newRules.push({
+          id: ruleId++,
+          priority: 1,
+          action: {
+            type: 'redirect',
+            redirect: {
+              transform: {
+                scheme: 'chrome-extension',
+                host: chrome.runtime.id,
+                path: '/blocked/blocked.html',
+                queryTransform: {
+                  addOrReplaceParams: [
+                    { key: 'url', value: '{url}' }
+                  ]
+                }
+              }
+            }
+          },
+          condition: {
+            urlFilter: `||www.${domain}`,
+            resourceTypes: ['main_frame']
+          }
+        });
+        break;
+
+      case 'wildcard':
+        if (pattern.startsWith('*.')) {
+          // Subdomain wildcard
+          const domain = pattern.substring(2);
+          urlFilter = `||${domain}`;
+        } else {
+          // General wildcard - convert * to *
+          urlFilter = pattern.replace(/\*/g, '*');
+        }
+
+        if (urlFilter) {
+          newRules.push({
+            id: ruleId++,
+            priority: 1,
+            action: {
+              type: 'redirect',
+              redirect: {
+                transform: {
+                  scheme: 'chrome-extension',
+                  host: chrome.runtime.id,
+                  path: '/blocked/blocked.html',
+                  queryTransform: {
+                    addOrReplaceParams: [
+                      { key: 'url', value: '{url}' }
+                    ]
+                  }
+                }
+              }
+            },
+            condition: {
+              urlFilter: urlFilter,
+              resourceTypes: ['main_frame']
+            }
+          });
+        }
+        break;
+
+      case 'keyword':
+        // Keyword match
+        newRules.push({
+          id: ruleId++,
+          priority: 1,
+          action: {
+            type: 'redirect',
+            redirect: {
+              transform: {
+                scheme: 'chrome-extension',
+                host: chrome.runtime.id,
+                path: '/blocked/blocked.html',
+                queryTransform: {
+                  addOrReplaceParams: [
+                    { key: 'url', value: '{url}' }
+                  ]
+                }
+              }
+            }
+          },
+          condition: {
+            urlFilter: `*${pattern}*`,
+            resourceTypes: ['main_frame']
+          }
+        });
+        break;
+    }
+  }
+
+  // Update rules
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: existingRuleIds,
+    addRules: newRules
+  });
+
+  console.log('[FocusGuard] Updated blocking rules, active rules:', newRules.length);
+}
 
 // Check if a URL matches blocking rules
 async function checkIfBlocked(url) {
