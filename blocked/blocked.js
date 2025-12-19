@@ -75,7 +75,19 @@ async function init() {
 
 function attachEventListeners() {
   document.getElementById('goBackBtn').addEventListener('click', () => {
-    window.history.back();
+    // Navigate to safe URL instead of history.back() to avoid re-blocking
+    if (settings.redirectUrl) {
+      window.location.href = settings.redirectUrl;
+    } else {
+      // Close the tab if possible, otherwise go to new tab page
+      chrome.tabs.getCurrent((tab) => {
+        if (tab) {
+          chrome.tabs.remove(tab.id);
+        } else {
+          window.location.href = 'chrome://newtab';
+        }
+      });
+    }
   });
 
   document.getElementById('tempUnblockBtn').addEventListener('click', showChallenge);
