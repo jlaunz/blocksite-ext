@@ -89,29 +89,15 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              extensionPath: '/blocked/blocked.html'
+              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
             }
           },
           condition: {
-            urlFilter: `||${domain}`,
+            regexFilter: `^https?://([a-z0-9-]+\\.)?${domain.replace(/\./g, '\\.')}(/.*)?$`,
             resourceTypes: ['main_frame']
           }
         });
-        // Also match www version
-        newRules.push({
-          id: ruleId++,
-          priority: 1,
-          action: {
-            type: 'redirect',
-            redirect: {
-              extensionPath: '/blocked/blocked.html'
-            }
-          },
-          condition: {
-            urlFilter: `||www.${domain}`,
-            resourceTypes: ['main_frame']
-          }
-        });
+        // www version is already covered by the regex above
         break;
 
       case 'wildcard':
@@ -131,11 +117,11 @@ async function updateBlockingRules() {
             action: {
               type: 'redirect',
               redirect: {
-                extensionPath: '/blocked/blocked.html'
+                regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
               }
             },
             condition: {
-              urlFilter: urlFilter,
+              regexFilter: pattern.replace(/\*/g, '.*').replace(/\./g, '\\.'),
               resourceTypes: ['main_frame']
             }
           });
@@ -150,11 +136,11 @@ async function updateBlockingRules() {
           action: {
             type: 'redirect',
             redirect: {
-              extensionPath: '/blocked/blocked.html'
+              regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?url=\\0'
             }
           },
           condition: {
-            urlFilter: `*${pattern}*`,
+            regexFilter: `.*${pattern.replace(/\./g, '\\.')}.*`,
             resourceTypes: ['main_frame']
           }
         });
