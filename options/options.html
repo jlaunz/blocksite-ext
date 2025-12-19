@@ -50,6 +50,15 @@
       </section>
 
       <section class="settings-section">
+        <h2>Delete Protection</h2>
+        <div class="setting-group">
+          <label for="deletePassword">Password (for deleting sites):</label>
+          <input type="password" id="deletePassword" placeholder="Set a password" />
+          <small>Required to permanently delete blocked sites (5 min wait + password)</small>
+        </div>
+      </section>
+
+      <section class="settings-section">
         <h2>Blocked Sites Management</h2>
         <div class="add-site-form">
           <input type="text" id="newSitePattern" placeholder="example.com or *.example.com" />
@@ -72,6 +81,10 @@
         </div>
 
         <div id="sitesTable"></div>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <button id="destroyAllBtn" class="btn btn-danger">Destroy All Blocked Sites</button>
+        </div>
       </section>
 
       <section class="settings-section">

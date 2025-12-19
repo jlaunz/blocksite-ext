@@ -13,6 +13,7 @@ function attachEventListeners() {
   document.getElementById('saveBtn').addEventListener('click', saveSettings);
   document.getElementById('resetBtn').addEventListener('click', resetSettings);
   document.getElementById('addSiteBtn').addEventListener('click', addSite);
+  document.getElementById('destroyAllBtn').addEventListener('click', destroyAll);
   document.getElementById('newSitePattern').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addSite();
   });
@@ -32,7 +33,8 @@ async function loadSettings() {
     'redirectUrl',
     'challengeType',
     'waitDuration',
-    'blockedSites'
+    'blockedSites',
+    'deletePassword'
   ]);
 
   // Load block mode
@@ -48,6 +50,9 @@ async function loadSettings() {
   // Load challenge settings
   document.getElementById('challengeType').value = data.challengeType || 'math';
   document.getElementById('waitDuration').value = data.waitDuration || 30;
+
+  // Load password
+  document.getElementById('deletePassword').value = data.deletePassword || '';
 
   // Load blocked sites
   loadBlockedSites();
@@ -165,18 +170,101 @@ async function toggleSite(id) {
   }
 }
 
+// Track delete countdowns
+const deleteCountdowns = {};
+
 async function deleteSite(id) {
-  if (!confirm('Are you sure you want to delete this site?')) {
+  const data = await chrome.storage.local.get(['deletePassword', 'blockedSites']);
+  const password = data.deletePassword;
+
+  if (!password) {
+    alert('Please set a delete password in settings first!');
     return;
   }
 
+  // Check if countdown already started for this site
+  if (deleteCountdowns[id]) {
+    alert('Delete countdown already in progress for this site!');
+    return;
+  }
+
+  // Start 5 minute countdown
+  const countdown = 300; // 5 minutes in seconds
+  deleteCountdowns[id] = {
+    remaining: countdown,
+    startTime: Date.now()
+  };
+
+  // Update UI to show countdown
+  updateDeleteCountdown(id);
+
+  const countdownInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - deleteCountdowns[id].startTime) / 1000);
+    deleteCountdowns[id].remaining = countdown - elapsed;
+
+    if (deleteCountdowns[id].remaining <= 0) {
+      clearInterval(countdownInterval);
+      // Show password prompt
+      promptPasswordAndDelete(id, password);
+    } else {
+      updateDeleteCountdown(id);
+    }
+  }, 1000);
+}
+
+function updateDeleteCountdown(id) {
+  const btn = document.getElementById(`delete-${id}`);
+  if (!btn || !deleteCountdowns[id]) return;
+
+  const remaining = deleteCountdowns[id].remaining;
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+
+  btn.textContent = `Wait ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+}
+
+async function promptPasswordAndDelete(id, correctPassword) {
+  const enteredPassword = prompt('Enter your delete password:');
+
+  if (!enteredPassword) {
+    delete deleteCountdowns[id];
+    await loadBlockedSites();
+    showStatus('Delete cancelled', 'error');
+    return;
+  }
+
+  if (enteredPassword !== correctPassword) {
+    delete deleteCountdowns[id];
+    await loadBlockedSites();
+    showStatus('Incorrect password! Delete cancelled.', 'error');
+    return;
+  }
+
+  // Password correct, delete the site
   const data = await chrome.storage.local.get(['blockedSites']);
   const blockedSites = data.blockedSites || [];
-
   const filtered = blockedSites.filter(s => s.id !== id);
+
   await chrome.storage.local.set({ blockedSites: filtered });
+  delete deleteCountdowns[id];
   await loadBlockedSites();
   showStatus('Site deleted successfully', 'success');
+}
+
+async function destroyAll() {
+  if (!confirm('⚠️ WARNING: This will delete ALL blocked sites!\n\nAre you absolutely sure?')) {
+    return;
+  }
+
+  if (!confirm('This action cannot be undone. Delete everything?')) {
+    return;
+  }
+
+  await chrome.storage.local.set({ blockedSites: [] });
+  await loadBlockedSites();
+  showStatus('All blocked sites destroyed', 'success');
 }
 
 async function saveSettings() {
@@ -184,12 +272,14 @@ async function saveSettings() {
   const redirectUrl = document.getElementById('redirectUrl').value;
   const challengeType = document.getElementById('challengeType').value;
   const waitDuration = parseInt(document.getElementById('waitDuration').value);
+  const deletePassword = document.getElementById('deletePassword').value;
 
   await chrome.storage.local.set({
     blockMode,
     redirectUrl,
     challengeType,
-    waitDuration
+    waitDuration,
+    deletePassword
   });
 
   showStatus('Settings saved successfully!', 'success');
