@@ -322,6 +322,7 @@ async function promptPasswordAndToggle(id, correctPassword) {
   if (enteredPassword !== correctPassword) {
     delete toggleCountdowns[id];
     await loadBlockedSites();
+    alert('❌ Incorrect password! Disable cancelled.');
     showStatus('Incorrect password! Disable cancelled.', 'error');
     return;
   }
@@ -405,6 +406,7 @@ async function promptPasswordAndDelete(id, correctPassword) {
   if (enteredPassword !== correctPassword) {
     delete deleteCountdowns[id];
     await loadBlockedSites();
+    alert('❌ Incorrect password! Delete cancelled.');
     showStatus('Incorrect password! Delete cancelled.', 'error');
     return;
   }

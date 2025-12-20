@@ -119,19 +119,6 @@ async function loadBlockedSites() {
     .sort((a, b) => b.addedAt - a.addedAt)
     .map(site => createBlockedItemHTML(site))
     .join('');
-
-  // Attach event listeners to buttons
-  blockedSites.forEach(site => {
-    const toggleBtn = document.getElementById(`toggle-${site.id}`);
-    const deleteBtn = document.getElementById(`delete-${site.id}`);
-
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => toggleSite(site.id));
-    }
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => deleteSite(site.id));
-    }
-  });
 }
 
 function createBlockedItemHTML(site) {
@@ -145,37 +132,10 @@ function createBlockedItemHTML(site) {
     <div class="blocked-item ${site.enabled ? '' : 'disabled'}">
       <div class="site-info">
         <div class="site-pattern">${escapeHtml(site.pattern)}</div>
-        <div class="site-type">${typeLabels[site.type]}</div>
-      </div>
-      <div class="item-actions">
-        <button id="toggle-${site.id}" class="toggle-btn" title="${site.enabled ? 'Disable' : 'Enable'}">
-          ${site.enabled ? '✓' : '○'}
-        </button>
-        <button id="delete-${site.id}" class="btn btn-danger">×</button>
+        <div class="site-type">${typeLabels[site.type]} • ${site.enabled ? 'Active' : 'Disabled'}</div>
       </div>
     </div>
   `;
-}
-
-async function toggleSite(id) {
-  const data = await chrome.storage.local.get(['blockedSites']);
-  const blockedSites = data.blockedSites || [];
-
-  const site = blockedSites.find(s => s.id === id);
-  if (site) {
-    site.enabled = !site.enabled;
-    await chrome.storage.local.set({ blockedSites });
-    await loadBlockedSites();
-  }
-}
-
-async function deleteSite(id) {
-  const data = await chrome.storage.local.get(['blockedSites']);
-  const blockedSites = data.blockedSites || [];
-
-  const filtered = blockedSites.filter(s => s.id !== id);
-  await chrome.storage.local.set({ blockedSites: filtered });
-  await loadBlockedSites();
 }
 
 function openOptions() {

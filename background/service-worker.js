@@ -223,8 +223,18 @@ async function checkIfBlocked(url) {
     // Check if site has temporary unblock that's still valid
     const now = Date.now();
     for (const [unblockedUrl, expiry] of Object.entries(temporaryUnblocks)) {
-      if (now < expiry && urlMatchesPattern(url, unblockedUrl)) {
-        return false; // Don't block, temporary unblock is active
+      if (now < expiry) {
+        try {
+          const unblockedHostname = new URL(unblockedUrl).hostname;
+          const normalizedUnblocked = unblockedHostname.replace(/^www\./, '');
+          const normalizedCurrent = hostname.replace(/^www\./, '');
+          if (normalizedUnblocked === normalizedCurrent) {
+            console.log('[FocusGuard] ✓ TEMPORARILY UNBLOCKED:', hostname, 'until', new Date(expiry));
+            return false; // Don't block, temporary unblock is active
+          }
+        } catch (error) {
+          console.error('[FocusGuard] Invalid temporary unblock URL:', unblockedUrl);
+        }
       }
     }
 
